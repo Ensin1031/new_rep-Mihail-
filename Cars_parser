@@ -7,9 +7,12 @@ def Cars(marka):
     sheet_01 = book.active
     cells = sheet_01['a2':f'g{sheet_01.max_row}']
     for name, model, body, visual, form_money, drive, size in cells:
+        if size.value == None:
+            size_finish = 'нет'
+        else:
+            size_finish = 'да'
         if name.value == marka:
-            if size.value == None:
-                print(f'{name.value} {model.value} {body.value}, Видимость системой: {visual.value}, Формат цен: {form_money.value}, Возможность транспортировки: {drive.value}, Вне габарита: нет')
-            else:
-                print(f'{name.value} {model.value} {body.value}, Видимость системой: {visual.value}, Формат цен: {form_money.value}, Возможность транспортировки: {drive.value}, Вне габарита: да')
+            print(f'{name.value} {model.value} {body.value}, '
+                  f'Видимость системой: {visual.value}, Формат цен: {form_money.value}, '
+                 f'Возможность транспортировки: {drive.value}, Вне габарита: {size_finish}')
     book.close()
