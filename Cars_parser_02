@@ -28,5 +28,5 @@ class Car:
     def __str__(self):
         return self.__parser_xml(self.marka)
 
-    def __repr__(self):
+    def __repr__(self):     # для вывода, при работе с консолью
         return self.__parser_xml(self.marka)
