@@ -1,18 +1,33 @@
 import openpyxl
+import os
 
-def Cars(marka):
-    if not isinstance(marka, str):
-        raise ValueError('Введите строковое значение')
-    book = openpyxl.open('C:\\avtovoz_cars.xlsx', read_only=True)
-    sheet_01 = book.active
-    cells = sheet_01['a2':f'g{sheet_01.max_row}']
-    for name, model, body, visual, form_money, drive, size in cells:
-        if size.value == None:
-            size_finish = 'нет'
+
+def Cars():
+    while True:
+        way = input('Введите путь к файлу Excel в Windows:')
+        if not os.path.isfile(way):
+            print('Введите корректный путь')
         else:
-            size_finish = 'да'
-        if name.value == marka:
-            print(f'{name.value} {model.value} {body.value}, '
-                  f'Видимость системой: {visual.value}, Формат цен: {form_money.value}, '
-                 f'Возможность транспортировки: {drive.value}, Вне габарита: {size_finish}')
-    book.close()
+            break
+    while True:
+        print('Введите название марки автомобиля, для выхода наберите EXIT')
+        try:
+            marka = str(input('Введите название марки автомобиля:'))
+        except ValueError:
+            print('Введите строковое значение')
+        else:
+            if marka == 'EXIT':
+                break
+            book = openpyxl.open(way, read_only=True)
+            sheet_01 = book.active
+            cells = sheet_01['a2':f'g{sheet_01.max_row}']
+            for name, model, body, visual, form_money, drive, size in cells:
+                if size.value == None:
+                    size_finish = 'нет'
+                else:
+                    size_finish = 'да'
+                if name.value == marka:
+                    print(f'{name.value} {model.value} {body.value}, '
+                          f'Видимость системой: {visual.value}, Формат цен: {form_money.value}, '
+                          f'Возможность транспортировки: {drive.value}, Вне габарита: {size_finish}')
+            book.close()
