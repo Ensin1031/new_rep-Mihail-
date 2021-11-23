@@ -1,17 +1,25 @@
 import openpyxl
+import os
 
 
 class Car:
 
-    def __init__(self, marka):
-        if not isinstance(marka, str):
+    def __init__(self):
+        way = input('Введите путь к файлу Excel в Windows:')
+        if not isinstance(way, str):
             raise ValueError('Введите строковое значение')
+        if not os.path.isfile(way):
+            raise FileNotFoundError('Введите корректный путь к файлу')
+        self.way = way
+        marka = input('Введите название марки автомобиля:')
+        if not isinstance(marka, str):
+            raise ValueError('Некорректное название, введите строковое значение')
         self.marka = marka
 
     @staticmethod
-    def __parser_xml(value):
+    def __parser_xml(way, value):
         result = str()
-        book = openpyxl.open('C:\\avtovoz_cars.xlsx', read_only=True)
+        book = openpyxl.open(way, read_only=True)
         sheet_01 = book.active
         cells = sheet_01['a2':f'g{sheet_01.max_row}']
         for name, model, body, visual, form_money, drive, size in cells:
@@ -22,11 +30,14 @@ class Car:
             if name.value == value:
                 result += (f'{name.value} {model.value} {body.value}, '
                            f'Видимость системой: {visual.value}, Формат цен: {form_money.value}, '
-                           f'Возможность транспортировки: {drive.value}, Вне габарита: {size_finish}\n')
+                           f'Возможность транспортировки: {drive.value}, Вне габарита: {size_finish} \n')
+        book.close()
+        if len(result) == 0:
+            result = 'Машин таких марок в указанном Вами файле не найдено'
         return result
 
     def __str__(self):
-        return self.__parser_xml(self.marka)
+        return self.__parser_xml(self.way, self.marka)
 
-    def __repr__(self):     # для вывода, при работе с консолью
-        return self.__parser_xml(self.marka)
+    def __repr__(self):  # для работы с консолью
+        return self.__parser_xml(self.way, self.marka)
