@@ -1,0 +1,159 @@
+import tkinter as tk
+from os import path, fspath, listdir
+from datetime import datetime
+
+
+class Main_dir(tk.Frame):
+    # Класс получения содержимого директории
+    def __init__(self, root):
+        super().__init__(root)
+        self.__init_window()
+
+    def handler_enter(self, event):
+        # Смена цвета фона кнопки при наведении курсора мыши
+        event.widget.config(bg='#B7EFF0')
+
+    def handler_leave(self, event):
+        # Смена цвета фона кнопки при отведении курсора мыши
+        event.widget.config(bg='#f0f0f0')
+
+    def __way_to_directory(self, way):
+        # Проверка корректного ввода пути к директории, dict на выходе (имя:путь)
+        while True:
+            list_dir_all = []
+            list_dir, list_file = {}, {}
+            if not path.isdir(fspath(way)):
+                self.lable_exit.configure(text='Введите корректный путь к директории', font='Arial 16')
+                break
+            if way:
+                list_dir_all = listdir(path=way)
+                self.lable_exit.configure(text='Содержимое директории:', font='Arial 14')
+
+            for index, value in enumerate(list_dir_all):
+                way_value = fspath(way + '/' + str(value))
+                if path.isdir(fspath(way_value)):
+                    list_dir[list_dir_all[index]] = way_value
+                if path.isfile(fspath(way_value)):
+                    list_file[list_dir_all[index]] = way_value
+            break
+
+        return list((list_dir, list_file))
+
+    def __output_str(self, way):
+        # итоговые str на вывод
+        if len(way[0]) > 0:
+            tk.Label(self.name_frame, font='Tahoma 9', text='Название').pack(anchor='w')
+            tk.Label(self.size_frame, font='Tahoma 9', text='Размер').pack(anchor='center')
+            tk.Label(self.date_frame, font='Tahoma 9', text='Дата последнего изменения').pack(anchor='center')
+
+        for value in way[0]:
+            way_to_dir = way[0][value]
+            tk.Label(self.name_frame, font='Tahoma 9', text=(value + ('    .' * (27 - len(value))))).pack(anchor='w')
+            tk.Label(self.size_frame,
+                     font='Tahoma 9',
+                     text='    [                 ]    '
+                     ).pack(anchor='w')
+            tk.Label(self.date_frame,
+                     font='Tahoma 9',
+                     text=(datetime.fromtimestamp(path.getmtime(way_to_dir)).strftime('%d.%m.%Y %H:%M:%S'))
+                     ).pack()
+
+        for value in way[1]:
+            way_to_file = way[1][value]
+            tk.Label(self.name_frame, font='Tahoma 9', text=(value + ('    .' * (45 - len(value))))).pack(anchor='w')
+            tk.Label(self.size_frame,
+                     font='Tahoma 9',
+                     text=(str(round((path.getsize(fspath(way_to_file)) / 1024), 2)) + ' Кбайт   ')
+                     ).pack(anchor='e')
+            tk.Label(self.date_frame,
+                     font='Tahoma 9',
+                     text=(datetime.fromtimestamp(path.getmtime(way_to_file)).strftime('%d.%m.%Y %H:%M:%S'))
+                     ).pack()
+
+    def __output_list(self, event=False):
+        # создание списка содержимого и его обработка
+        way = self.__way_to_directory(self.entry_enter.get())
+
+        result_frame_list = self.result_frame.place_slaves()
+
+        if len(result_frame_list) > 0:
+            for value in result_frame_list:
+                value.destroy()
+
+        if 1 < len(way[0]) + len(way[1]) <= 21:
+            self.name_frame = tk.Frame(self.result_frame, height=422, width=415)
+            self.size_frame = tk.Frame(self.result_frame, height=422, width=120)
+            self.date_frame = tk.Frame(self.result_frame, height=422, width=174)
+
+            self.__output_str(way)
+
+            self.name_frame.place(relx=0.01, rely=0.01)
+            self.size_frame.place(relx=0.6, rely=0.01)
+            self.date_frame.place(relx=0.97, rely=0.01, anchor='ne')
+        elif len(way[0]) + len(way[1]) > 21:
+        
+            # высота фрейма
+            height_scroll = (len(way[0]) + len(way[1])) * 21
+
+            # холст
+            canvas = tk.Canvas(self.result_frame,
+                               width=785,
+                               height=420,
+                               scrollregion=(0, 0, 785, height_scroll))
+
+            # скроллбар
+            sbar = tk.Scrollbar(self.result_frame, command=canvas.yview)
+            canvas.config(yscrollcommand=sbar.set)
+            sbar.place(relx=1, rely=1, anchor='se', relheight=1)
+            canvas.place(relx=0, rely=0)
+
+            # внутренние фреймы
+            inner_frame = tk.Frame(canvas, width=785, height=height_scroll)
+            canvas.create_window((0, 0), window=inner_frame, anchor=tk.NW)
+
+            self.name_frame = tk.Frame(inner_frame, height=height_scroll, width=415)
+            self.size_frame = tk.Frame(inner_frame, height=height_scroll, width=120)
+            self.date_frame = tk.Frame(inner_frame, height=height_scroll, width=174)
+
+            self.__output_str(way)
+
+            self.name_frame.place(relx=0.01, rely=0.01)
+            self.size_frame.place(relx=0.6, rely=0.01)
+            self.date_frame.place(relx=0.97, rely=0.01, anchor='ne')
+
+    def __init_window(self):
+        # Основное окно
+        root.geometry(f'800x600+{int(root.winfo_screenwidth() / 2 - 400)}+{int(root.winfo_screenheight() / 2 - 300)}')
+        root.resizable(True, True)
+
+        self.user_frame = tk.Frame(root, width=785, height=147).place(relx=0.01, rely=0.01)
+        self.result_frame = tk.Frame(root, width=785, height=430)
+        tk.Label(self.user_frame,
+                 text='Выведите содержимое указанной Вами директории на экран:',
+                 font='Arial 18'
+                 ).place(relx=0.5, rely=0.01, anchor=tk.N)  # метка - заголовок
+        tk.Label(self.user_frame,
+                 text='Введите путь к нужной директории:',
+                 font='Arial 14'
+                 ).place(relx=0.45, rely=0.07, anchor='ne')     # метка - просим пользователя ввести путь
+        self.entry_enter = tk.Entry(self.user_frame, font='Arial 14')  # поле ввода адреса директории
+        self.result_button = tk.Button(self.user_frame, font='Arial 14',
+                                       text='Вывод содержимого', command=self.__output_list)    # кнопка вывода
+        self.lable_exit = tk.Label(self.user_frame, font='Arial 12', text='')  # Предвариельная метка
+
+        self.entry_enter.bind('<Return>', self.__output_list)  # биндим поле на клавишу <Enter>
+        self.result_button.bind('<Enter>', self.handler_enter)  # наведение курсора
+        self.result_button.bind('<Leave>', self.handler_leave)  # отведение курсора
+
+        self.entry_enter.place(relx=0.5, rely=0.07)
+        self.result_button.place(relx=0.5, rely=0.16, anchor='center')
+        self.lable_exit.place(relx=0.5, rely=0.23, anchor='center')
+
+        self.result_frame.place(relx=0.01, rely=0.27)
+
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    root.title('Вывод содержимого указанной директории')
+    result = Main_dir(root)
+    root.mainloop()
