@@ -124,7 +124,7 @@ class Main_dir(tk.Frame):
     def __init_window(self):
         # Основное окно
         root.geometry(f'800x600+{int(root.winfo_screenwidth() / 2 - 400)}+{int(root.winfo_screenheight() / 2 - 300)}')
-        root.resizable(True, True)
+        root.resizable(False, False)
 
         self.user_frame = tk.Frame(root, width=785, height=147).place(relx=0.01, rely=0.01)
         self.result_frame = tk.Frame(root, width=785, height=430)
