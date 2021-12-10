@@ -15,6 +15,11 @@ class Main_dir(tk.Frame):
         # функция изменения цвета поля по событию
         event.widget.config(bg=color)
 
+    def __on_mousewheel(self, event):
+        # функция прокрутки окна результата колесом мыши
+        self.canvas.yview_scroll(-1 * int(event.delta / 120), "units")
+        return 'break'
+
     def __way_to_directory(self, way):
         # Проверка корректного ввода пути к директории, dict на выходе (имя:путь)
         while True:
@@ -40,86 +45,91 @@ class Main_dir(tk.Frame):
     def __output_str(self, way):
         # итоговые str на вывод
         if len(way[0]) > 0:
-            tk.Label(self.name_frame, font='Tahoma 9', text='Название').pack(anchor='w')
-            tk.Label(self.size_frame, font='Tahoma 9', text='Размер').pack(anchor='center')
-            tk.Label(self.date_frame, font='Tahoma 9', text='Дата последнего изменения').pack(anchor='center')
+            name_frame = tk.Frame(self.frame_str, width=785, height=21)
+            name_frame.pack()
+            tk.Label(name_frame, font='Tahoma 9', text='Название').place(relx=0.01, rely=0)
+            tk.Label(name_frame, font='Tahoma 9', text='Размер').place(relx=0.6, rely=0)
+            tk.Label(name_frame, font='Tahoma 9', text='Дата последнего изменения').place(relx=0.97, rely=0, anchor='ne')
 
         for value in way[0]:
+            self.frame = tk.Frame(self.frame_str, width=785, height=21)
             way_to_dir = way[0][value]
-            self.ln = tk.Label(self.name_frame, font='Tahoma 9', text=(value + (' ' * (200 - len(value)))))
-            self.ls = tk.Label(self.size_frame, font='Tahoma 9', text='    [                 ]    ')
-            self.ld = tk.Label(self.date_frame, font='Tahoma 9',
-                          text=(datetime.fromtimestamp(path.getmtime(way_to_dir)).strftime('%d.%m.%Y %H:%M:%S')))
-            for widget in (self.ln, self.ls, self.ld):
-                widget.bind('<Enter>', partial(self.__color_event_bg, self.ln, 'white'))  # наведение курсора
-                widget.bind('<Leave>', partial(self.__color_event_bg, self.ln, '#f0f0f0'))  # отведение курсора
-            self.ln.pack(anchor='w')
-            self.ls.pack(anchor='e')
-            self.ld.pack()
+            self.ln = tk.Label(self.frame, font='Tahoma 9', text=value)
+            self.ls = tk.Label(self.frame, font='Tahoma 9', text='    [                 ]    ')
+            self.ld = tk.Label(self.frame, font='Tahoma 9',
+                               text=(datetime.fromtimestamp(path.getmtime(way_to_dir)).strftime('%d.%m.%Y %H:%M:%S')))
+
+            self.frame.pack()
+            self.ln.place(relx=0.01, rely=0)
+            self.ls.place(relx=0.75, rely=0, anchor='ne')
+            self.ld.place(relx=0.97, rely=0, anchor='ne')
 
         for value in way[1]:
+            self.frame = tk.Frame(self.frame_str, width=785, height=21)
             way_to_file = way[1][value]
-            self.ln = tk.Label(self.name_frame, font='Tahoma 9', text=(value + (' ' * (200 - len(value)))))
-            self.ls = tk.Label(self.size_frame, font='Tahoma 9',
-                          text=(str(round((path.getsize(fspath(way_to_file)) / 1024), 2)) + ' Кбайт   '))
-            self.ld = tk.Label(self.date_frame, font='Tahoma 9',
-                          text=(datetime.fromtimestamp(path.getmtime(way_to_file)).strftime('%d.%m.%Y %H:%M:%S')))
-            for widget in (self.ln, self.ls, self.ld):
-                widget.bind('<Enter>', partial(self.__color_event_bg, self.ln, 'white'))  # наведение курсора
-                widget.bind('<Leave>', partial(self.__color_event_bg, self.ln, '#f0f0f0'))  # отведение курсора
-            self.ln.pack(anchor='w')
-            self.ls.pack(anchor='e')
-            self.ld.pack()
+            self.ln = tk.Label(self.frame, font='Tahoma 9', text=value)
+            self.ls = tk.Label(self.frame, font='Tahoma 9',
+                               text=(str(round((path.getsize(fspath(way_to_file)) / 1024), 2)) + ' Кбайт   '))
+            self.ld = tk.Label(self.frame, font='Tahoma 9',
+                               text=(datetime.fromtimestamp(path.getmtime(way_to_file)).strftime('%d.%m.%Y %H:%M:%S')))
+
+            self.frame.pack()
+            self.ln.place(relx=0.01, rely=0)
+            self.ls.place(relx=0.75, rely=0, anchor='ne')
+            self.ld.place(relx=0.97, rely=0, anchor='ne')
 
     def __output_list(self, event=False):
         # создание списка содержимого и его обработка
         way = self.__way_to_directory(self.entry_enter.get())
 
-        result_frame_list = self.result_frame.place_slaves()
+        result_frame_plase_list = self.result_frame.place_slaves()
+        result_frame_pack_list = self.result_frame.pack_slaves()
 
-        if len(result_frame_list) > 0:
-            for value in result_frame_list:
+        if len(result_frame_plase_list) > 0:
+            for value in result_frame_plase_list:
+                value.destroy()
+        if len(result_frame_pack_list) > 0:
+            for value in result_frame_pack_list:
                 value.destroy()
 
+        # высота фрейма
+        height_scroll = (1 + len(way[0]) + len(way[1])) * 21
+
+        # холст
+        self.canvas = tk.Canvas(self.result_frame,
+                           width=785,
+                           height=420,
+                           scrollregion=(0, 0, 785, height_scroll))
+
         if 1 < len(way[0]) + len(way[1]) <= 21:
-            self.name_frame = tk.Frame(self.result_frame, height=422, width=415)
-            self.size_frame = tk.Frame(self.result_frame, height=422, width=120)
-            self.date_frame = tk.Frame(self.result_frame, height=422, width=174)
+            self.frame_str = tk.Frame(self.result_frame, width=785, height=430)
+
             self.__output_str(way)
+
+            self.frame_str.pack()
+
         elif len(way[0]) + len(way[1]) > 21:
-
-            # высота фрейма
-            height_scroll = (len(way[0]) + len(way[1])) * 21
-
-            # холст
-            canvas = tk.Canvas(self.result_frame,
-                               width=785,
-                               height=420,
-                               scrollregion=(0, 0, 785, height_scroll))
-
             # скроллбар
-            sbar = tk.Scrollbar(self.result_frame, command=canvas.yview)
-            canvas.config(yscrollcommand=sbar.set)
+            sbar = tk.Scrollbar(self.result_frame, command=self.canvas.yview)
+            self.canvas.config(yscrollcommand=sbar.set)
+            self.canvas.bind_all("<MouseWheel>", self.__on_mousewheel)
             sbar.place(relx=1, rely=1, anchor='se', relheight=1)
-            canvas.place(relx=0, rely=0)
+            self.canvas.pack()
 
             # внутренние фреймы
-            inner_frame = tk.Frame(canvas, width=785, height=height_scroll)
-            canvas.create_window((0, 0), window=inner_frame, anchor=tk.NW)
+            inner_frame = tk.Frame(self.canvas, width=785, height=height_scroll)
+            self.canvas.create_window((0, 0), window=inner_frame, anchor=tk.NW)
 
-            self.name_frame = tk.Frame(inner_frame, height=height_scroll, width=415)
-            self.size_frame = tk.Frame(inner_frame, height=height_scroll, width=120)
-            self.date_frame = tk.Frame(inner_frame, height=height_scroll, width=174)
+            self.frame_str = tk.Frame(inner_frame, width=785, height=430)
+
             self.__output_str(way)
 
-        self.name_frame.place(relx=0.01, rely=0.01)
-        self.size_frame.place(relx=0.6, rely=0.01)
-        self.date_frame.place(relx=0.97, rely=0.01, anchor='ne')
+            self.frame_str.pack()
 
     def __init_window(self):
         # Основное окно
         root.geometry(f'800x600+{int(root.winfo_screenwidth() / 2 - 400)}+{int(root.winfo_screenheight() / 2 - 300)}')
-        root.resizable(True, True)
+        root.resizable(False, False)
 
         self.user_frame = tk.Frame(root, width=785, height=147).place(relx=0.01, rely=0.01)
         self.result_frame = tk.Frame(root, width=785, height=430)
